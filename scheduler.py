@@ -1,0 +1,26 @@
+from apscheduler.schedulers.blocking import BlockingScheduler
+from dotenv import load_dotenv
+import os
+import sharepoint_file_uploader
+
+load_dotenv()
+
+
+def start():
+    # Add all the things you want to run here
+    # TODO Run GitHub Classrooms script
+
+    # Upload it all
+    files = []
+    sharepoint_file_uploader.main()
+
+
+if __name__ == '__main__':
+    if os.getenv('SCHEDULER_MODE') == 'onetime':
+        start()
+    elif os.getenv('SCHEDULER_MODE') == 'schedule':
+        scheduler = BlockingScheduler()
+        scheduler.add_job(start, 'cron', minute='0 5 * * MON')
+        scheduler.start()  # Keeps running until stopped
+    else:
+        print('fix SCHEDULER_MODE in .env')
