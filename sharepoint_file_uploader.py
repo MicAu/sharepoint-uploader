@@ -20,35 +20,42 @@ def main(files):
 
 
 def login(driver):
-
+    if os.getenv('SHAREPOINT_EMAIL') == '': # Manual login
+        time_to_wait = 180
+        common.message(0, f'Waiting {time_to_wait}s for you to login')
+        WebDriverWait(driver, 120).until(EC.url_to_be(os.getenv('SHAREPOINT_FOLDER')))
+    else:
     # email
-    wait = WebDriverWait(driver, 10)
-    email_field = wait.until(EC.visibility_of_element_located((By.XPATH, "//input[@type='email']")))
-    email_field.send_keys(os.getenv('EMAIL'))
-
-    submit_button = wait.until(EC.element_to_be_clickable((By.XPATH, "//input[@type='submit']")))
-    submit_button.click()
-
-    password_field = wait.until(EC.visibility_of_element_located((By.XPATH, "//input[@type='password']")))
-    password_field.send_keys(os.getenv('PASSWORD'))
-
-    signin_button = wait.until(EC.element_to_be_clickable((By.XPATH, "//input[@type='submit']")))
-    signin_button.click()
-
-    time.sleep(3) # TODO Crude way to wait for the page to load - do later (i probably won't)
-
-    # TOTP
-    if 'Enter code' in driver.page_source:
-        totp_field = wait.until(EC.visibility_of_element_located((By.XPATH, "//input[@type='tel']")))
-        totp_field.send_keys(pyotp.TOTP(os.getenv('TOTP_SEED')).now())
+        wait = WebDriverWait(driver, 10)
+        
+        email_field = wait.until(EC.visibility_of_element_located((By.XPATH, "//input[@type='email']")))
+        email_field.send_keys(os.getenv('SHAREPOINT_EMAIL'))
 
         submit_button = wait.until(EC.element_to_be_clickable((By.XPATH, "//input[@type='submit']")))
         submit_button.click()
 
-    # Check if login was successful
-    if driver.current_url != os.getenv('SHAREPOINT_FOLDER'):
-        print('Login unsuccessful')
-        exit()
+        password_field = wait.until(EC.visibility_of_element_located((By.XPATH, "//input[@type='password']")))
+        password_field.send_keys(os.getenv('SHAREPOINT_PASSWORD'))
+
+        signin_button = wait.until(EC.element_to_be_clickable((By.XPATH, "//input[@type='submit']")))
+        signin_button.click()
+
+        time.sleep(3) # TODO Crude way to wait for the page to load - do later (i probably won't)
+
+        # TOTP
+        if 'Enter code' in driver.page_source:
+            totp_field = wait.until(EC.visibility_of_element_located((By.XPATH, "//input[@type='tel']")))
+            totp_field.send_keys(pyotp.TOTP(os.getenv('TOTP_SEED')).now())
+
+            submit_button = wait.until(EC.element_to_be_clickable((By.XPATH, "//input[@type='submit']")))
+            submit_button.click()
+
+        # Check if login was successful
+        if driver.current_url != os.getenv('SHAREPOINT_FOLDER'):
+            print('Login unsuccessful')
+            print('current url: ', driver.current_url)
+            print('expected url:', os.getenv('SHAREPOINT_FOLDER'))
+            raise Exception('Login unsuccessful')
 
 
 def upload(driver, files):
@@ -64,9 +71,6 @@ def upload(driver, files):
     for file in files:
         file_name = os.path.basename(file) # Get filename from path
         wait.until(EC.text_to_be_present_in_element((By.XPATH, "//div[@role='tabpanel']"), file_name))
-
-    print(' so far so good')
-    time.sleep(120)
 
 
 def drop_files(element, files, offsetX=0, offsetY=0):
@@ -110,6 +114,6 @@ if __name__ == '__main__':
     if len(sys.argv) <= 1:
         print("Usage: python3 sharepoint_file_uploader.py <file1> <file2> ...")
         sys.exit(1)
-
     file_list = sys.argv[1:]
-    main(file_list)
+    file_list = [os.path.abspath(path) for path in file_list] # Convert to absolute path
+    main(file_list)  
