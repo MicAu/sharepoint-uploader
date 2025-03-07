@@ -29,7 +29,7 @@ if __name__ == '__main__':
         start()
     elif os.getenv('SCHEDULER_MODE') == 'schedule':
         scheduler = BlockingScheduler()
-        scheduler.add_job(start, 'cron', minute='0 5 * * MON')
+        scheduler.add_job(start, 'cron', minute=os.getenv('SCHEULDER_CRON'))
         scheduler.start()  # Keeps running until stopped
     else:
         print('fix SCHEDULER_MODE in .env')
