@@ -10,7 +10,6 @@ import time
 import os
 import pyotp
 import sys
-import json
 
 load_dotenv()
 

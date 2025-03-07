@@ -12,7 +12,16 @@ def start():
 
     # Upload it all
     files = []
-    sharepoint_file_uploader.main()
+    tries = 0
+    while tries < 3:
+        try:
+            sharepoint_file_uploader.main()
+            print('Files uploaded successfully')
+            return 
+        except Exception as e:
+            print('Error uploading files:', e)
+            print('trying again')
+            tries = tries + 1
 
 
 if __name__ == '__main__':
